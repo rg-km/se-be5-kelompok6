@@ -16,6 +16,170 @@ let MOVE_INTERVAL = 200;
 let level = 1;
 let isEatLifes = false;
 
+const dinding = [
+  {
+    level: 2,
+    position: [
+      {
+        x: 2,
+        y: 2,
+      },
+      {
+        x: 3,
+        y: 2,
+      },
+      {
+        x: 4,
+        y: 2,
+      },
+      {
+        x: 5,
+        y: 2,
+      },
+      {
+        x: 11,
+        y: 2,
+      },
+      {
+        x: 12,
+        y: 2,
+      },
+      {
+        x: 13,
+        y: 2,
+      },
+      {
+        x: 14,
+        y: 2,
+      },
+    ],
+  },
+  {
+    level: 3,
+    position: [
+      {
+        x: 2,
+        y: 2,
+      },
+      {
+        x: 2,
+        y: 3,
+      },
+      {
+        x: 2,
+        y: 4,
+      },
+      {
+        x: 2,
+        y: 5,
+      },
+      {
+        x: 3,
+        y: 2,
+      },
+      {
+        x: 3,
+        y: 2,
+      },
+      {
+        x: 5,
+        y: 2,
+      },
+      {
+        x: 4,
+        y: 2,
+      },
+    ],
+  },
+
+  {
+    level: 4,
+    position: [
+      {
+        x: 11,
+        y: 10,
+      },
+      {
+        x: 12,
+        y: 10,
+      },
+      {
+        x: 13,
+        y: 10,
+      },
+      {
+        x: 14,
+        y: 10,
+      },
+      {
+        x: 15,
+        y: 10,
+      },
+      {
+        x: 9,
+        y: 14,
+      },
+      {
+        x: 7,
+        y: 14,
+      },
+      {
+        x: 8,
+        y: 14,
+      },
+      {
+        x: 23,
+        y: 24,
+      },
+      {
+        x: 24,
+        y: 24,
+      },
+      {
+        x: 25,
+        y: 24,
+      },
+    ],
+  },
+  {
+    level: 5,
+    position: [
+      {
+        x: 18,
+        y: 13,
+      },
+      {
+        x: 18,
+        y: 12,
+      },
+      {
+        x: 18,
+        y: 14,
+      },
+      {
+        x: 17,
+        y: 17,
+      },
+      {
+        x: 16,
+        y: 17,
+      },
+      {
+        x: 15,
+        y: 17,
+      },
+      {
+        x: 5,
+        y: 2,
+      },
+      {
+        x: 4,
+        y: 2,
+      },
+    ],
+  },
+];
+
 function initPosition() {
   return {
     x: Math.floor(Math.random() * WIDTH),
@@ -57,6 +221,14 @@ let apples = [
   },
 ];
 
+let diamonds = [
+  {
+    id: "dd",
+    color: "green",
+    position: initPosition(),
+  },
+];
+
 let lifeDiamond = {
   color: "white",
   position: initPosition(),
@@ -78,7 +250,6 @@ function drawCell(ctx, x, y, color) {
   ctx.fillStyle = color;
   ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
 }
-
 //untuk score ular
 function drawScore(snake) {
   let textScore = document.getElementById("TextScore");
@@ -136,6 +307,24 @@ function primaryNumberCheck(snake) {
   return isPrimaryNumber;
 }
 
+function playAudio(type) {
+  var soundFile = document.createElement("audio");
+  soundFile.preload = "auto";
+
+  //Load the sound file (using a source element for expandability)
+  var src = document.createElement("source");
+  if (type == "eat-apple") src.src = "./assets/eat-apple.mp3";
+  else if (type == "level-up") src.src = "./assets/level-up.mp3";
+  else src.src = "./assets/game-over.mp3";
+
+  soundFile.appendChild(src);
+
+  //Load the audio tag
+  //It auto plays as a fallback
+  soundFile.load();
+  soundFile.play();
+}
+
 function draw() {
   setInterval(function () {
     let snakeCanvas = document.getElementById("snakeBoard");
@@ -170,6 +359,14 @@ function draw() {
         CELL_SIZE,
         CELL_SIZE
       );
+    }
+
+    // Untuk Dinding
+    let wallPosition = getWallPosition();
+    if (Array.isArray(wallPosition)) {
+      for (let i = 0; i < wallPosition.length; i++) {
+        drawCell(ctx, wallPosition[i].x, wallPosition[i].y, "grey");
+      }
     }
 
     //munculin score sama nyawa
@@ -233,10 +430,44 @@ function eat(snake, apples, diamond) {
   for (let i = 0; i < apples.length; i++) {
     let apple = apples[i];
     if (x == apple.position.x && y == apple.position.y) {
+      playAudio("eat-apple"); // play audio eat
       snake.score++; //nambah score
+
       apple.position = initPosition();
       snake.body.push({ x, y }); //badan panjang
       isEatApple = true;
+
+      if (snake.score % 5 == 0) {
+        level++;
+        playAudio("level-up");
+
+        // Jika Level kurang dari 5
+        if (level < 6) {
+          setTimeout(function () {
+            alert(`Anda sekarang level ${level}`);
+          }, 100);
+          MOVE_INTERVAL -= 30;
+        } else {
+          // Jika Level lebih dari 5 (Permainan Selesai)
+          MOVE_INTERVAL = 200;
+          setTimeout(function () {
+            alert(`Permainan Selesai`);
+          }, 100);
+          let headAndBody = initHeadAndBody();
+          snake.head = headAndBody.head;
+          snake.body = headAndBody.body;
+          snake.lifes = 3;
+          snake.direction = initDirection();
+          snake.score = 0; //Balikan score 1
+          level = 1; //Balikan level 1
+          drawNyawa();
+        }
+
+        // Jeda dalam 1 detik untuk keluar allert
+      }
+      break;
+
+      // Untuk Level
     }
   }
 
@@ -252,6 +483,37 @@ function eat(snake, apples, diamond) {
   else if (isEatApple) {
     diamond.position = initPosition();
     isEatLifes = false;
+  }
+
+  // Snake And Wall
+  if (level > 1) {
+    let wallPosition = getWallPosition();
+    if (Array.isArray(wallPosition)) {
+      for (let i = 0; i < wallPosition.length; i++) {
+        let position = wallPosition[i];
+        if (x == position.x && y == position.y) {
+          snake.lifes--;
+          drawNyawa();
+          let headAndBody = initHeadAndBody();
+          snake.head = headAndBody.head;
+          snake.body = headAndBody.body;
+
+          // Jika nyawa kurang atau sama dengan 0, maka game over
+          if (snake.lifes <= 0) {
+            playAudio("game-over"); // play audio eat
+            setTimeout(function () {
+              alert("Game Over!");
+            }, 200);
+            snake.lifes = 3;
+            snake.direction = initDirection();
+            snake.score = 0; //Balikan score 1
+            level = 1; //Balikan level 1
+            MOVE_INTERVAL = 200; //Balikan kecepatan awal
+          }
+          break;
+        }
+      }
+    }
   }
 }
 
