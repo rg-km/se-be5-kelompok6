@@ -1,7 +1,7 @@
 const CELL_SIZE = 20;
 
-const CANVAS_SIZE_WIDTH = 800;
-const CANVAS_SIZE_HEIGHT = 600;
+const CANVAS_SIZE_WIDTH = 900;
+const CANVAS_SIZE_HEIGHT = 700;
 const REDRAW_INTERVAL = 50;
 const WIDTH = CANVAS_SIZE_WIDTH / CELL_SIZE;
 const HEIGHT = CANVAS_SIZE_HEIGHT / CELL_SIZE;
@@ -230,7 +230,7 @@ let diamonds = [
 ];
 
 let lifeDiamond = {
-  color: "white",
+  // color: "white",
   position: initPosition(),
 };
 
@@ -365,7 +365,7 @@ function draw() {
     let wallPosition = getWallPosition();
     if (Array.isArray(wallPosition)) {
       for (let i = 0; i < wallPosition.length; i++) {
-        drawCell(ctx, wallPosition[i].x, wallPosition[i].y, "grey");
+        drawCell(ctx, wallPosition[i].x, wallPosition[i].y, "black");
       }
     }
 
@@ -403,7 +403,7 @@ function draw() {
         CELL_SIZE
       );
     }
-  }, 200);
+  }, 600);
 }
 
 function teleport(snake) {
