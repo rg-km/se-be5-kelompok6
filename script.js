@@ -57,6 +57,14 @@ let apples = [
   },
 ];
 
+let diamonds = [
+  {
+    id: "dd",
+    color: "green",
+    position: initPosition(),
+  },
+];
+
 let lifeDiamond = {
   color: "white",
   position: initPosition(),
@@ -71,7 +79,6 @@ function drawScore(snake) {
   let textScore = document.getElementById("TextScore");
   textScore.textContent = snake.score;
 }
-
 //untuk nyawanya
 function drawlife(snake) {
   let textLifes = document.getElementById("TextLifes");
@@ -107,6 +114,21 @@ function drawNyawa() {
       nyawaImg.appendChild(getImage());
     }
   }, 200);
+}
+
+function primaryNumberCheck(snake) {
+  let isPrimaryNumber = true;
+  for (let i = 1; i <= snake.score; i++) {
+    // Jika i bukan angka 1 atau skor //
+    if ([1, snake.score].includes(i) == false) {
+      // Jika Score mod i adalah 0 //
+      if (snake.score % i == 0) {
+        isPrimaryNumber = false;
+        break;
+      }
+    }
+  }
+  return isPrimaryNumber;
 }
 
 function draw() {
@@ -145,11 +167,49 @@ function draw() {
       );
     }
 
+    // Untuk Dinding
+    let wallPosition = getWallPosition();
+    if (Array.isArray(wallPosition)) {
+      for (let i = 0; i < wallPosition.length; i++) {
+        drawCell(ctx, wallPosition[i].x, wallPosition[i].y, "grey");
+      }
+    }
+
     //munculin score sama nyawa
     drawScore(snake1);
     drawlife(snake1);
     drawLevel(snake1);
   }, REDRAW_INTERVAL);
+
+  setInterval(function () {
+    let snakeCanvas = document.getElementById("snakeBoard");
+    let ctx = snakeCanvas.getContext("2d");
+    //untuk diamond
+    let isPrimaryNumber = primaryNumberCheck(snake1);
+
+    // Jika Score adalah primary number dan di skor tersebut belum makan nyawa
+    if (isPrimaryNumber && isEatLifes == false) {
+      drawCell(
+        ctx,
+        lifeDiamond.position.x,
+        lifeDiamond.position.y,
+        lifeDiamond.color
+      );
+
+      var diamon = document.createElement("img");
+      diamon.src = "./assets/diamond.png";
+      diamon.height = "20";
+      diamon.width = "20";
+
+      ctx.drawImage(
+        diamon,
+        lifeDiamond.position.x * CELL_SIZE,
+        lifeDiamond.position.y * CELL_SIZE,
+        CELL_SIZE,
+        CELL_SIZE
+      );
+    }
+  }, 200);
 }
 
 function teleport(snake) {
@@ -167,7 +227,8 @@ function teleport(snake) {
   }
 }
 //this
-function eat(snake, apples) {
+function eat(snake, apples, diamond) {
+  let isEatApple = false;
   let x = snake.head.x;
   let y = snake.head.y;
 
@@ -179,9 +240,53 @@ function eat(snake, apples) {
 
       apple.position = initPosition();
       snake.body.push({ x, y }); //badan panjang
+      isEatApple = true;
+
+      if (snake.score % 5 == 0) {
+        level++;
+
+        // Jika Level kurang dari 5
+        if (level < 6) {
+          setTimeout(function () {
+            alert(`Anda sekarang level ${level}`);
+          }, 100);
+          MOVE_INTERVAL -= 30;
+        } else {
+          // Jika Level lebih dari 5 (Permainan Selesai)
+          MOVE_INTERVAL = 200;
+          setTimeout(function () {
+            alert(`Permainan Selesai`);
+          }, 100);
+          let headAndBody = initHeadAndBody();
+          snake.head = headAndBody.head;
+          snake.body = headAndBody.body;
+          snake.lifes = 3;
+          snake.direction = initDirection();
+          snake.score = 0; //Balikan score 1
+          level = 1; //Balikan level 1
+          drawNyawa();
+        }
+
+        // Jeda dalam 1 detik untuk keluar allert
+      }
+      break;
 
       // Untuk Level
     }
+  }
+
+  // Snake and diamond
+  if (x == diamond.position.x && y == diamond.position.y) {
+    isEatLifes = true;
+    drawNyawa();
+    diamond.position = initPosition();
+    snake.lifes++; //nambah nyawa
+  }
+
+  // Jika Ular makan Apple, maka nyawa berganti posisi
+  else if (isEatApple) {
+    diamond.position = initPosition();
+    isEatLifes = false;
   }
 }
 
@@ -201,7 +306,7 @@ function move(snake) {
       break;
   }
   teleport(snake);
-  eat(snake, apples);
+  eat(snake, apples, lifeDiamond);
   moveBody(snake);
 
   setTimeout(function () {
